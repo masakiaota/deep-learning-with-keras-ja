@@ -33,6 +33,7 @@ VALIDATION_SPLIT = 0.2  # how much TRAIN is reserved for VALIDATION
 
 # data: shuffled and split between train and test sets
 # データの準備
+# train 60000サンプル, test10000サンプル
 (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
 # X_train is 60000 rows of 28x28 values --> reshaped in 60000 x 784
@@ -86,7 +87,7 @@ callbacks = [make_tensorboard(set_dir_name='keras_MINST_V1')]
 model.fit(X_train, Y_train,
           batch_size=BATCH_SIZE, epochs=NB_EPOCH,
           callbacks=callbacks,  # callbackは読んでも良うわからんかった
-          verbose=VERBOSE, validation_split=VALIDATION_SPLIT)
+          verbose=VERBOSE, validation_split=VALIDATION_SPLIT)  # 検証用にtrainの中の0.2を用いる
 
 score = model.evaluate(X_test, Y_test, verbose=VERBOSE)
 print("\nTest score:", score[0])

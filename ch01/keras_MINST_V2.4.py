@@ -1,5 +1,14 @@
 """
 1.3.4 隠れ層の追加による精度向上
+の演習問題
+隠れ層を100つにしてみる
+
+Result
+
+Test score: 2.3009882064819336
+Test accuracy: 0.1135 # ほとんどあてずっぽ
+
+単純にstuck more layersで精度が出るってわけでもなさそう
 """
 from __future__ import print_function
 import numpy as np
@@ -48,11 +57,13 @@ Y_test = np_utils.to_categorical(y_test, NB_CLASSES)
 # final stage is softmax
 # モデルの構築
 model = Sequential()
-# どうやら入力層だけinput_shapeを指定しているらしい
+# どうやら入力層?だけinput_shapeを指定しているらしい
+# 層を一つ抜いた
 model.add(Dense(N_HIDDEN, input_shape=(RESHAPED,)))
 model.add(Activation('relu'))  # 簡単に書けるのが売りのケラスだろうと全結合と発火はやはり交互に重ねないといけないらしい
-model.add(Dense(N_HIDDEN))  # input_shape指定いらない
-model.add(Activation('relu'))
+for _ in range(99):
+    model.add(Dense(N_HIDDEN))
+    model.add(Activation("relu"))
 model.add(Dense(NB_CLASSES))  # 出力を10にする
 model.add(Activation('softmax'))
 model.summary()
