@@ -1,9 +1,28 @@
+"""
+1.3.6最適アルゴリズムの変更
+RMSpropの場合
+48000/48000 [==============================] - 2s 33us/step - loss: 0.0705 - acc: 0.9792 - val_loss: 0.1037 - val_acc: 0.9779
+10000/10000 [==============================] - 0s 24us/step
+
+Test score: 0.09383920551140108
+Test accuracy: 0.978
+
+Adamの場合
+Epoch 20/20
+48000/48000 [==============================] - 2s 34us/step - loss: 0.0551 - acc: 0.9814 - val_loss: 0.0802 - val_acc: 0.9773
+10000/10000 [==============================] - 0s 23us/step
+
+Test score: 0.07651489794443186
+Test accuracy: 0.9789
+
+ADAMのほうが少し良い
+"""
 from __future__ import print_function
 import numpy as np
 from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
-from keras.optimizers import RMSprop
+from keras.optimizers import RMSprop, Adam
 from keras.utils import np_utils
 from make_tensorboard import make_tensorboard
 
@@ -15,7 +34,9 @@ NB_EPOCH = 20
 BATCH_SIZE = 128
 VERBOSE = 1
 NB_CLASSES = 10   # number of outputs = number of digits
-OPTIMIZER = RMSprop()  # optimizer, explainedin this chapter
+# optimizermを変更する
+# OPTIMIZER = RMSprop()  # optimizer, explainedin this chapter
+OPTIMIZER = Adam()
 N_HIDDEN = 128
 VALIDATION_SPLIT = 0.2  # how much TRAIN is reserved for VALIDATION
 DROPOUT = 0.3
