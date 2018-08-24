@@ -1,3 +1,27 @@
+"""6.5.1 GRUで品詞タグづけ
+
+GRU
+Epoch 1/1
+3131/3131 [==============================] - 56s 18ms/step - loss: 1.0662 - acc: 0.9060 - val_loss: 0.5404 - val_acc: 0.9159
+783/783 [==============================] - 3s 3ms/step
+Test score: 0.540, accuracy: 0.916
+Train on 3131 samples, validate on 783 samples
+
+LSTM
+Epoch 1/1
+3131/3131 [==============================] - 65s 21ms/step - loss: 0.9938 - acc: 0.9036 - val_loss: 0.5494 - val_acc: 0.9159
+783/783 [==============================] - 3s 3ms/step
+Test score: 0.549, accuracy: 0.916
+Train on 3131 samples, validate on 783 samples
+
+bidirectional LSTMjj
+Epoch 1/1
+3131/3131 [==============================] - 90s 29ms/step - loss: 0.8276 - acc: 0.9075 - val_loss: 0.4836 - val_acc: 0.9159
+783/783 [==============================] - 4s 5ms/step
+Test score: 0.484, accuracy: 0.916
+
+
+"""
 # -*- coding: utf-8 -*-
 from __future__ import division, print_function
 import collections
@@ -43,6 +67,8 @@ def build_tensor(filename, numrecs, word2index, maxlen):
 
 DATA_DIR = "./data"
 
+if not os.path.exists(DATA_DIR):
+    os.mkdir(DATA_DIR)
 with open(os.path.join(DATA_DIR, "treebank_sents.txt"), "w") as fedata, \
         open(os.path.join(DATA_DIR, "treebank_poss.txt"), "w") as ffdata:
     sents = nltk.corpus.treebank.tagged_sents()
@@ -101,13 +127,29 @@ BATCH_SIZE = 32
 NUM_EPOCHS = 1
 
 # GRU
+print()
+print("GRU")
+# (None, AX_SEQLEN, 1)
 model = Sequential()
 model.add(Embedding(s_vocabsize, EMBED_SIZE, input_length=MAX_SEQLEN))
+# (None, MAX_SEQLEN, EMBED_SIZE)
 model.add(Dropout(0.2))
+
+# EncoderRNNであり、
+# return_sequeces=False
 model.add(GRU(HIDDEN_SIZE, dropout=0.2, recurrent_dropout=0.2))
+# (None, HIDDEN_SIZE)
+# RepeatVector層は前の入力を複製する役割の層らしい
 model.add(RepeatVector(MAX_SEQLEN))
+# (None, MAX_SEQLEN, HIDDEN_SIZE)
+# デコーダーRNN 今までの状態とEncoderRNNの内部状態に基づいて品詞ごとに内部状態を変える
 model.add(GRU(HIDDEN_SIZE, return_sequences=True))
+# (None, MAX_SEQLEN, HIDDEN_SIZE)
+# TimeDistributedがわからん　詳しくはhttps://keras.io/ja/layers/wrappers/
+# このラッパーにより，入力のすべての時間スライスにレイヤーを適用できます．
+# 時間的な順序を残すときに使うっぽい？
 model.add(TimeDistributed(Dense(t_vocabsize)))
+# (None, MAX_SEQLEN, t_vocabsize) 時系列に対応するMAX_SEQLENが残っている。
 model.add(Activation("softmax"))
 model.compile(loss="categorical_crossentropy",
               optimizer="adam",
@@ -119,6 +161,8 @@ print("Test score: {:.3f}, accuracy: {:.3f}".format(score, acc))
 
 
 # LSTM
+print()
+print("LSTM")
 model = Sequential()
 model.add(Embedding(s_vocabsize, EMBED_SIZE, input_length=MAX_SEQLEN))
 model.add(Dropout(0.2))
@@ -136,6 +180,8 @@ print("Test score: {:.3f}, accuracy: {:.3f}".format(score, acc))
 
 
 # Bidirectional LSTM
+print()
+print("Bidictional LSTM")
 model = Sequential()
 model.add(Embedding(s_vocabsize, EMBED_SIZE, input_length=MAX_SEQLEN))
 model.add(Dropout(0.2))

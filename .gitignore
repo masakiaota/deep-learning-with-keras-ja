@@ -5,3 +5,4 @@
 events.out.tfevents*
 tmp/
 ch02/sample_images/*
+data/

@@ -1,52 +1,26 @@
 # -*- coding: utf-8 -*-
 """
 6.1.1RNNを用いたテキスト生成
-
-
+をLSTMに置き換えて行ってみる
+ 
 結果は以下のようになったが
-Iteration #: 0
-Epoch 1/1
-162739/162739 [==============================] - 10s 64us/step - loss: 2.3803
-Generating from seed: and take i
-and take it and the so the he the he the he the he the he the he the he the he the he the he the he the he the
-==================================================
-Iteration #: 1
-Epoch 1/1
-162739/162739 [==============================] - 10s 60us/step - loss: 2.0613
-Generating from seed: e!  ‘how c
-e!  ‘how che the got the got he could the got he could the got he could the got he could the got he could the
 Iteration #: 23
 Epoch 1/1
-162739/162739 [==============================] - 10s 64us/step - loss: 1.4124
-Generating from seed: ew she had
-ew she had never heard of the some her heart of the some her heart of the some her heart of the some her heart
+162739/162739 [==============================] - 24s 148us/step - loss: 1.0903
+Generating from seed: yourself,’
+yourself,’ said the dormouse to see if you distaic warch it out of the works to say in a low to some of the so
 ==================================================
 Iteration #: 24
 Epoch 1/1
-162739/162739 [==============================] - 11s 65us/step - loss: 1.4062
-Generating from seed:   ‘it wasn
-  ‘it wasn’t and all the perpoctused the dormouse began to the dormouse began to the dormouse began to the dor
-
-どうもループに入りがち
-
-別の施行
-Iteration #: 23
-Epoch 1/1
-162739/162739 [==============================] - 10s 58us/step - loss: 1.4047
-Generating from seed: y: ‘you ha
-y: ‘you have not the rabbit all the project gutenberg-tm electronic works to the tor other to see the caterpil
-==================================================
-Iteration #: 24
-Epoch 1/1
-162739/162739 [==============================] - 9s 58us/step - loss: 1.3974
-Generating from seed: e hatter w
-e hatter was a little began the gryphon and don’t be the this was the door an the gryphon and don’t be the thi
+162739/162739 [==============================] - 25s 155us/step - loss: 1.0784
+Generating from seed: m a poor m
+m a poor manted the gryphon and don’t be a lew the caterpillar said to herself, ‘i don’t know what the mouse w
 
 """
 from __future__ import print_function
 
 import numpy as np
-from keras.layers import Dense, Activation, SimpleRNN
+from keras.layers import Dense, Activation, SimpleRNN, LSTM
 from keras.models import Sequential
 import codecs
 
@@ -129,9 +103,9 @@ NUM_PREDS_PER_EPOCH = 100
 model = Sequential()
 # 系列から1つだけを返してもらいたいので、return_sequences=Falseである。
 # tensorflowのパフォーマンス向上のためunroll=Trueらしい
-model.add(SimpleRNN(HIDDEN_SIZE, return_sequences=False,
-                    input_shape=(SEQLEN, nb_chars),
-                    unroll=True))
+model.add(LSTM(HIDDEN_SIZE, return_sequences=False,  # ここをSimpleRNNからLSTMに置換しただけ
+               input_shape=(SEQLEN, nb_chars),
+               unroll=True))
 # RNNは隠れ層扱いで、最終的に全結合層に受け渡さないとニューロンの数があれ（語彙力）
 model.add(Dense(nb_chars))
 model.add(Activation("softmax"))
