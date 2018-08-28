@@ -1,3 +1,13 @@
+"""
+3.3 CIFER-10の画像認識に挑戦
+
+
+Epoch 12/12
+40000/40000 [==============================] - 66s 2ms/step - loss: 0.6508 - acc: 0.7761 - val_loss: 0.8802 - val_acc: 0.7052
+Test loss: 0.8898560324668884
+Test accuracy: 0.7033
+
+"""
 import os
 import keras
 from keras.models import Sequential
@@ -12,13 +22,16 @@ from keras.callbacks import TensorBoard, ModelCheckpoint
 
 
 def network(input_shape, num_classes):
+    """
+    LeNet-likeなもの
+    """
     model = Sequential()
 
     # extract image features by convolution and max pooling layers
     model.add(Conv2D(
         32, kernel_size=3, padding="same",
         input_shape=input_shape, activation="relu"
-        ))
+    ))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
     model.add(Conv2D(64, kernel_size=3, padding="same", activation="relu"))
@@ -35,7 +48,7 @@ def network(input_shape, num_classes):
 class CIFAR10Dataset():
 
     def __init__(self):
-        self.image_shape = (32, 32, 3)
+        self.image_shape = (32, 32, 3)  # MNISTと違ってチャンネルが3になっていることに注意。
         self.num_classes = 10
 
     def get_batch(self):
@@ -66,7 +79,7 @@ class Trainer():
         self._target = model
         self._target.compile(
             loss=loss, optimizer=optimizer, metrics=["accuracy"]
-            )
+        )
         self.verbose = 1
         logdir = "logdir_cifar10_net"
         self.log_dir = os.path.join(os.path.dirname(__file__), logdir)
@@ -83,6 +96,7 @@ class Trainer():
             x_train, y_train,
             batch_size=batch_size, epochs=epochs,
             validation_split=validation_split,
+            # callbackで各epochの学習を保存、またTensorBoardの可視化も
             callbacks=[
                 TensorBoard(log_dir=self.log_dir),
                 ModelCheckpoint(model_path, save_best_only=True)
@@ -101,7 +115,7 @@ x_train, y_train, x_test, y_test = dataset.get_batch()
 trainer = Trainer(model, loss="categorical_crossentropy", optimizer=RMSprop())
 trainer.train(
     x_train, y_train, batch_size=128, epochs=12, validation_split=0.2
-    )
+)
 
 # show result
 score = model.evaluate(x_test, y_test, verbose=0)

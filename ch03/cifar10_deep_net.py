@@ -1,3 +1,13 @@
+"""
+3.3.1 ネットワークをより深くする事による改善
+Epoch 12/12
+40000/40000 [==============================] - 176s 4ms/step - loss: 0.6282 - acc: 0.7803 - val_loss: 0.6855 - val_acc: 0.7689
+Test loss: 0.7050348613262176
+Test accuracy: 0.7615
+
+層を深くしても大きくは変わらなかった
+それでも5%ぐらいは良くなったが
+"""
 import os
 import keras
 from keras.models import Sequential
@@ -12,13 +22,22 @@ from keras.callbacks import TensorBoard, ModelCheckpoint
 
 
 def network(input_shape, num_classes):
+    """
+    ネットワークを深くして
+    conv conv pool
+    dropout
+    conv conv pool 
+    dropput
+    dense drop dense(出力)
+    を構築してみる
+    """
     model = Sequential()
 
     # extract image features by convolution and max pooling layers
     model.add(Conv2D(
         32, kernel_size=3, padding="same",
         input_shape=input_shape, activation="relu"
-        ))
+    ))
     model.add(Conv2D(32, kernel_size=3, activation="relu"))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
@@ -69,7 +88,7 @@ class Trainer():
         self._target = model
         self._target.compile(
             loss=loss, optimizer=optimizer, metrics=["accuracy"]
-            )
+        )
         self.verbose = 1
         logdir = "logdir_cifar10_deep_net"
         self.log_dir = os.path.join(os.path.dirname(__file__), logdir)
@@ -104,7 +123,7 @@ x_train, y_train, x_test, y_test = dataset.get_batch()
 trainer = Trainer(model, loss="categorical_crossentropy", optimizer=RMSprop())
 trainer.train(
     x_train, y_train, batch_size=128, epochs=12, validation_split=0.2
-    )
+)
 
 # show result
 score = model.evaluate(x_test, y_test, verbose=0)

@@ -1,3 +1,6 @@
+"""
+3.4.1 組み込みのVGG-16のモデルを使用する
+"""
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg16 import preprocess_input, decode_predictions
 import keras.preprocessing.image as Image
