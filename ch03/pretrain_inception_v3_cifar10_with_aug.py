@@ -1,3 +1,13 @@
+"""
+3.4.3 Inception-v3を使用した転移学習
+
+Inception-v3はこれらしい https://goo.gl/images/nZDRZA
+
+入力層に近い方(下位層)は固定して出力層に近い方(上位層)は再学習するもの
+流れが二段階ある
+1. InceptionV3のFC以外を固定して、自分で追加した層を数epoch学習させる
+2. Fine-tuningのため、InceptionV3の250層からtrainableにして再学習させる
+"""
 import os
 import keras
 from keras.applications.inception_v3 import InceptionV3
@@ -13,14 +23,25 @@ import cv2
 
 
 def network():
+    """
+    InceptionV3のFC以外を固定、更に上位にavepoolとFCを追加したものをつくる
+    """
     base_model = InceptionV3(weights="imagenet", include_top=False)
+    print("basemodel"+"*"*50)
+    # base_model.summary()
+    # ひとまず一括で全部flozen
     for layer in base_model.layers:
         layer.trainable = False
     x = base_model.output
+    # この書き方が見慣れないけど多分、base_model.add(Glo...)と同じっぽいな
     x = GlobalAveragePooling2D()(x)
+    # globalなんたらっていう層は、各チャンネルのrowとcolの空間で平均をとり、channnel単位で一つの値に集約している（一枚(1チャンネル)の画像を一つ画素に潰すイメージ？）
+    # これによって(batch_size, row, cols, channels)という特徴マップを(batch_size, channels)に変換している
     x = Dense(1024, activation="relu")(x)
     prediction = Dense(10, activation="softmax")(x)
     model = Model(inputs=base_model.input, outputs=prediction)
+    print("networkmodel"+"*"*50)
+    # model.summary()
     return model
 
 
@@ -36,6 +57,7 @@ class CIFAR10Dataset():
         self.num_classes = 10
 
     def upscale(self, x, data_size):
+        # おそらくだがこのzero行列がものっそいメモリを食って、colaboratoryでも自分のマシーンでも動かないのだと思われる
         data_upscaled = np.zeros((data_size,
                                   self.image_shape[0],
                                   self.image_shape[1],
@@ -76,7 +98,7 @@ class Trainer():
         self._target = model
         self._target.compile(
             loss=loss, optimizer=optimizer, metrics=["accuracy"]
-            )
+        )
         self.verbose = 1
         logdir = "logdir_" + os.path.basename(__file__).replace('.py', '')
         self.log_dir = os.path.join(os.path.dirname(__file__), logdir)
@@ -140,19 +162,24 @@ x_train, y_train, x_test, y_test = dataset.get_batch()
 trainer = Trainer(model, loss="categorical_crossentropy", optimizer=RMSprop())
 trainer.train(
     x_train, y_train, batch_size=26, epochs=8, validation_split=0.2
-    )
+)
+# trainer.trainのなかではcallbackで最も良い性能のモデルが保存されている
+# それを再び呼び出して学習させる。
 model = load_model(os.path.join(trainer.log_dir, trainer.model_file_name))
 
+# 学習する前に250層以降をtrainableに変更する
 for layer in model.layers[:249]:
     layer.trainable = False
 for layer in model.layers[249:]:
     layer.trainable = True
 
+print("finetuningmodel"+"*"*50)
 trainer = Trainer(model, loss="categorical_crossentropy",
                   optimizer=SGD(lr=0.001, momentum=0.9))
 trainer.train(
     x_train, y_train, batch_size=26, epochs=8, validation_split=0.2
 )
+# 再び最も良かったモデルを呼び出す
 model = load_model(os.path.join(trainer.log_dir, trainer.model_file_name))
 
 # show result
