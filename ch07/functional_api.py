@@ -1,3 +1,6 @@
+"""
+7.1 functional API
+"""
 from keras.layers import Input, Dense, Activation
 from keras.models import Model
 
@@ -10,4 +13,5 @@ s_K = Activation("softmax")  # 4
 y = s_K(f(s_2(g(x))))
 
 model = Model(inputs=x, outputs=y)
+model.summary()
 model.compile(loss="categorical_crossentropy", optimizer="adam")

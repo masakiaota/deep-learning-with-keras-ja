@@ -55,6 +55,8 @@ class CIFAR10Dataset():
         """
         self.image_shape = (190, 190, 3)
         self.num_classes = 10
+        self.train_data_size = 4000
+        self.test_data_size = 4000
 
     def upscale(self, x, data_size):
         # おそらくだがこのzero行列がものっそいメモリを食って、colaboratoryでも自分のマシーンでも動かないのだと思われる
@@ -70,7 +72,10 @@ class CIFAR10Dataset():
 
     def get_batch(self):
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-
+        x_train = x_train[:self.train_data_size]
+        y_train = y_train[:self.train_data_size]
+        x_test = x_test[:self.test_data_size]
+        y_test = y_test[:self.test_data_size]
         x_train = self.upscale(x_train, x_train.shape[0])
         x_test = self.upscale(x_test, x_test.shape[0])
 
@@ -186,3 +191,22 @@ model = load_model(os.path.join(trainer.log_dir, trainer.model_file_name))
 score = model.evaluate(x_test, y_test, verbose=0)
 print("Test loss:", score[0])
 print("Test accuracy:", score[1])
+"""
+trainer init
+Epoch 1/8
+126/126 [==============================] - 38s 302ms/step - loss: 2.2584 - acc: 0.4231 - val_loss: 1.8626 - val_acc: 0.5372
+Epoch 2/8
+126/126 [==============================] - 33s 261ms/step - loss: 1.2402 - acc: 0.5947 - val_loss: 1.5283 - val_acc: 0.6337
+Epoch 3/8
+126/126 [==============================] - 33s 261ms/step - loss: 1.0805 - acc: 0.6365 - val_loss: 1.6212 - val_acc: 0.6398
+finetuningmodel**************************************************
+trainer init
+Epoch 1/8
+126/126 [==============================] - 40s 319ms/step - loss: 0.8296 - acc: 0.7162 - val_loss: 0.9029 - val_acc: 0.7204
+Epoch 2/8
+126/126 [==============================] - 36s 284ms/step - loss: 0.6367 - acc: 0.7881 - val_loss: 0.8665 - val_acc: 0.7326
+Epoch 3/8
+126/126 [==============================] - 36s 285ms/step - loss: 0.5357 - acc: 0.8132 - val_loss: 0.9174 - val_acc: 0.7399
+Test loss: 1.0048335832543671
+Test accuracy: 0.721923828125
+"""

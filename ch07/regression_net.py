@@ -1,3 +1,6 @@
+"""
+7.2.1 回帰モデルの実装:大気中のベンゼン濃度の予測
+"""
 import os
 import urllib.request
 from zipfile import ZipFile
@@ -12,6 +15,9 @@ import pandas as pd
 
 
 def download_data():
+    """
+    データをダウンロードしてZIPを解凍するやつ
+    """
     url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00360/"
     zip_file = "AirQualityUCI.zip"
     file_name = "AirQualityUCI.csv"
@@ -31,6 +37,7 @@ def download_data():
 
 
 def load_dataset(file_path):
+    # separatorが;になっていて、小数点が,として表記されているのでこうやるとpandasで読み込めるらしい
     dataset = pd.read_csv(file_path, sep=";", decimal=",")
 
     # Drop nameless columns
@@ -41,6 +48,7 @@ def load_dataset(file_path):
     dataset.drop(["Date", "Time"], axis=1, inplace=True)
 
     # Fill NaN by its column mean
+    # NaNのデータを平均値で置換する
     dataset.fillna(dataset.mean(), inplace=True)
 
     # Separate the data to label and features
@@ -50,6 +58,10 @@ def load_dataset(file_path):
 
 
 def make_model(input_size):
+    """
+    予測に使用するネットワークの定義
+    functionalAPIで書いている
+    """
     inputs = Input(shape=(input_size,))
     hidden = Dense(8, activation="relu", kernel_initializer="glorot_uniform")
     output = Dense(1, kernel_initializer="glorot_uniform")
@@ -64,6 +76,7 @@ def main():
     X, y = load_dataset(file_path)
 
     # Normalize the numerical values
+    # 正規化(出力も)
     yScaler = StandardScaler()
     xScaler = StandardScaler()
     y = yScaler.fit_transform(y)
@@ -91,12 +104,13 @@ def main():
     y_pred = model.predict(X_test)
 
     # Show prediction
+    # スケールをもとに戻さないといけない
     y_pred = yScaler.inverse_transform(y_pred)
     y_test = yScaler.inverse_transform(y_test)
     result = pd.DataFrame({
         "prediction": pd.Series(y_pred.flatten()),
         "actual": pd.Series(y_test.flatten())
-        })
+    })
 
     fig, ax = plt.subplots(nrows=2)
     ax0 = result.plot.line(ax=ax[0])
