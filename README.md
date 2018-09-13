@@ -7,9 +7,9 @@
 - [ ] ch04
 - [ ] ch05
 - [x] ch06
-- [ ] ch07(途中)
+- [x] ch07(途中まで)
 - [ ] ch08
-- [ ] ch09
+- [x] ch09
 
 # 直感 Deep Learning
 

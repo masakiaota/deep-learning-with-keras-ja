@@ -1,3 +1,16 @@
+"""
+7.3.1 自己復号化器の実装：文ベクトルの生成
+文章を対象にした自己復号化器、LSTMを用いる、文章 to vec
+他のautoencoderについてはkerasのブログ”Building Autoencoders in Keras”を参考にするように
+
+
+今回の実装の概要
+1. データの読み込み
+2. 単語ベクトルの埋め込み（pretrained）
+3. モデルの定義
+4. 学習(main)
+5. predict
+"""
 import os
 import argparse
 from zipfile import ZipFile
@@ -27,7 +40,7 @@ class ReutersCorpus():
             self.documents = reuters.fileids()
         except LookupError:
             print("Reuters corpus does not downloaded. So download it.")
-            nltk.download("reuters")
+            nltk.download("reuters")  # ロイター通信の記事をダウンロード
             self.documents = reuters.fileids()
 
         try:
@@ -35,6 +48,7 @@ class ReutersCorpus():
         except LookupError:
             print("Englisth stopword does not downloaded. So download it.")
             nltk.download("stopwords")
+            # 頻出だが文の特徴とはならない語のリスト（aとかtheとか）
             self.stopwords = stopwords.words("english")
 
     def build(self, vocab_size=5000):
@@ -47,18 +61,20 @@ class ReutersCorpus():
         self.vocab = [self.PAD, self.UNK] + self.vocab
 
     def trim(self, word):
+        # 記号を無視、全て小文字に、数字をすべて9に置き換え。
         w = word.lower().strip()
         if w in self.stopwords or self._ignores.match(w):
             return ""
         if w.replace(".", "").isdigit():
             return "9"
         return w
+    # モデルが学習できる形に加工する
 
     def batch_iter(self, embedding, kind="train", batch_size=64, seq_size=50):
         if len(self.vocab) == 0:
             raise Exception(
                 "Vocabulary hasn't made yet. Please execute 'build' method."
-                )
+            )
 
         steps = self.get_step_count(kind, batch_size)
         docs = self.get_documents(kind)
@@ -70,14 +86,15 @@ class ReutersCorpus():
             for s in range(steps):
                 index = s * batch_size
                 x = docs_i[indices[index:(index + batch_size)]]
-                x_vec = embedding[x]
+                x_vec = embedding[x]  # すでにベクトルに埋め込まれているのが引数にある前提
                 # input = output
                 yield x_vec, x_vec
 
     def docs_to_matrix(self, docs, seq_size):
         docs_i = []
         for d in docs:
-            words = reuters.words(d)
+            words = reuters.words(d)  # 単語に分割
+            # 一定の長さに、単語を固有の数値に、PAD
             words = self.sentence_to_ids(words, seq_size)
             docs_i.append(words)
         docs_i = np.array(docs_i)
@@ -103,6 +120,9 @@ class ReutersCorpus():
 
 
 class EmbeddingLoader():
+    """
+    事前学習済みの単語ベクトルを埋め込む
+    """
 
     def __init__(self, embed_dir="", size=100):
         self.embed_dir = embed_dir
@@ -118,7 +138,7 @@ class EmbeddingLoader():
             if not download:
                 raise Exception(
                     "Can't load embedding from {}.".format(embed_path)
-                    )
+                )
             else:
                 print("Download the GloVe embedding.")
                 file_name = os.path.basename(url)
@@ -156,14 +176,20 @@ class AutoEncoder():
         self.model = None
 
     def build(self):
+        # バイディレクショナルLSTMでエンコードする
+        # None×文章長×埋め込み次元の入力
         inputs = Input(shape=(self.seq_size, self.embed_size), name="input")
         encoded = Bidirectional(
             LSTM(self.latent_size),
             merge_mode="concat", name="encoder")(inputs)
+        # concatは前後2つの文章ベクトルをつなぎ合わせるオプション。基本的につけて良い
+        # None×latent_size
         encoded = RepeatVector(self.seq_size, name="replicate")(encoded)
+        # RepeatVecでNone×latent_size×seq_size
         decoded = Bidirectional(
             LSTM(self.embed_size, return_sequences=True),
             merge_mode="sum", name="decoder")(encoded)
+        # mergeしてたらsumを指定しろ
 
         self.model = Model(inputs, decoded)
 
@@ -213,10 +239,10 @@ def main(log_dir, model_name="autoencoder.h5"):
         validation_data=test_iter,
         validation_steps=test_steps,
         callbacks=[
-            TensorBoard(log_dir=log_dir), 
+            TensorBoard(log_dir=log_dir),
             ModelCheckpoint(filepath=model_file, save_best_only=True)
-            ]
-        )
+        ]
+    )
 
 
 def predict(log_dir, model_name="autoencoder.h5"):
